@@ -60,6 +60,7 @@
 
         sensitivity = "2x";                      /* "1x" (most) .. "4x" (least, default) */
         data-mode = "relative";
+        primary-tap-enable;                      /* tap = left click */
         /* swap-xy; */                           /* rotate 90 degrees */
         /* sleep-mode-enable; */
     };
