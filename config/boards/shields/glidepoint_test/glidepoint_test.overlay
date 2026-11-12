@@ -1,0 +1,62 @@
+/*
+ * Test shield: Cirque GlidePoint (Pinnacle ASIC) over I2C on a nice!nano v2,
+ * using the Keycapsss 4-pin I2C adapter (has 4.7k pull-ups on board).
+ *
+ *   Adapter / trackpad      nice!nano v2
+ *   VCC                 ->  VCC (3.3V)
+ *   GND                 ->  GND
+ *   SDA                 ->  pin 2  (P0.17)
+ *   SCL                 ->  pin 3  (P0.20)
+ *   DR  (extra wire from the trackpad's DR test pad, FPC pin 4)
+ *                       ->  pin 4  (P0.22)
+ *
+ * Remove R1 on the trackpad (puts it in I2C mode).
+ * Optional test buttons (switch to GND): pin 5 = left click, pin 6 = right click.
+ *
+ * Driver: Zephyr's cirque,pinnacle (ZMK main = Zephyr 4.1). It REQUIRES the DR pin;
+ * without it the driver fails to initialise.
+ */
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/i2c/i2c.h>
+
+/ {
+    chosen {
+        zmk,kscan = &kscan0;
+    };
+
+    kscan0: kscan {
+        compatible = "zmk,kscan-gpio-direct";
+        wakeup-source;
+        input-gpios
+            = <&pro_micro 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            , <&pro_micro 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>
+            ;
+    };
+
+    glidepoint_listener: glidepoint_listener {
+        compatible = "zmk,input-listener";
+        device = <&glidepoint>;
+    };
+};
+
+&pro_micro_i2c {
+    status = "okay";
+    clock-frequency = <I2C_BITRATE_STANDARD>;   /* 100 kHz */
+
+    glidepoint: glidepoint@2a {
+        compatible = "cirque,pinnacle";
+        reg = <0x2a>;                            /* Pinnacle default I2C address */
+        status = "okay";
+
+        /* HW_DR goes high when data is ready; the driver interrupts on the edge to
+         * "active", so active-high = rising edge. If the cursor never moves, try
+         * GPIO_ACTIVE_LOW (the binding text suggests it, but that looks wrong). */
+        data-ready-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>;
+
+        sensitivity = "2x";                      /* "1x" (most) .. "4x" (least, default) */
+        data-mode = "relative";
+        /* swap-xy; */                           /* rotate 90 degrees */
+        /* sleep-mode-enable; */
+    };
+};

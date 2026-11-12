@@ -1,0 +1,8 @@
+---
+include:
+  - board: nice_nano//zmk
+    shield: glidepoint_test
+  - board: nice_nano//zmk
+    shield: glidepoint_test
+    snippet: zmk-usb-logging
+    artifact-name: glidepoint_test-logging
